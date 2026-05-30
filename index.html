@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEVOUR | Insatiable Apparel Engine</title>
+    <style>
+        /* --- Core Design Variables --- */
+        :root {
+            --bg-color: #0a0a0a;
+            --panel-bg: rgba(20, 20, 20, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-color: #ffffff;
+            --accent-color: #ff3333; /* Crimson Red */
+            --success-color: #00ff66;
+            --muted-color: #888888;
+            --card-bg: #141414;
+            --font-main: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* --- Interface Toggle Utility --- */
+        .view-section {
+            display: none;
+        }
+        .view-section.active-view {
+            display: block;
+        }
+        
+        .admin-layout-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ==========================================================================
+           AUTHENTICATION GATEWAY MODAL
+           ========================================================================== */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(15px);
+            z-index: 5000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .auth-overlay.active-auth {
+            display: flex;
+        }
+        .auth-card {
+            background: #111;
+            border: 1px solid var(--border-color);
+            padding: 3rem;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+        .auth-card h2 {
+            font-size: 1.8rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        .auth-card p {
+            color: var(--muted-color);
+            font-size: 0.85rem;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .auth-card .form-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+        .auth-toggle-link {
+            font-size: 0.8rem;
+            color: var(--muted-color);
+            display: inline-block;
+            margin-top: 1.5rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: underline;
+        }
+        .auth-toggle-link:hover { color: var(--text-color); }
+        .close-auth {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--muted-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .close-auth:hover { color: white; }
+
+        /* ==========================================================================
+           STOREFRONT & ADMIN CUSTOM BRAND STYLES
+           ========================================================================== */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .logo span { color: var(--accent-color); }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2.5rem;
+        }
+
+        .nav-links a {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover { color: var(--accent-color); }
+
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(10, 10, 10, 1)), 
+                        url('https://images.unsplash.com/photo-1509281373149-e957c6296406?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+        }
+
+        .hero-content h1 {
+            font-size: clamp(3.5rem, 10vw, 7rem);
+            font-weight: 900;
+            letter-spacing: 8px;
+            line-height: 1;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .hero-content p {
+            font-size: clamp(1rem, 2vw, 1.5rem);
+            letter-spacing: 4px;
+            margin-bottom: 2.5rem;
+            color: var(--muted-color);
+            text-transform: uppercase;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-color);
+            color: var(--text-color);
+            transform: translateY(-2px);
+        }
+
+        .shop-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 8rem 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 3rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: var(--accent-color);
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2.5rem;
+        }
+
+        .product-card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+
+        .product-card:hover { transform: translateY(-5px); }
+
+        .product-image {
+            height: 400px;
+            background-color: #222;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .product-card:hover .product-image img { transform: scale(1.05); }
+
+        .product-info {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .product-price {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        .brand-statement {
+            background: linear-gradient(rgba(20, 20, 20, 0.9), rgba(20, 20, 20, 0.9)), 
+                        url('https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=80') center/cover fixed;
+            text-align: center;
+            padding: 10rem 2rem;
+        }
+
+        .statement-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .statement-content h2 {
+            font-size: 3rem;
+            letter-spacing: 4px;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+        }
+
+        .statement-content p {
+            color: var(--muted-color);
+            font-size: 1.2rem;
+            line-height: 1.8;
+        }
+
+        footer {
+            background-color: #050505;
+            padding: 5rem 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+
+        .footer-logo h3 {
+            font-size: 1.8rem;
+            letter-spacing: 3px;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links h4 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1.5rem;
+            color: var(--accent-color);
+        }
+
+        .footer-links ul { list-style: none; }
+        .footer-links li { margin-bottom: 0.8rem; }
+        .footer-links a { color: var(--muted-color); transition: color 0.3s; }
+        .footer-links a:hover { color: var(--text-color); }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+            color: var(--muted-color);
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .hq-link {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--muted-color);
+            padding: 0.3rem 0.8rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s;
+        }
+        .hq-link:hover {
+            color: white;
+            border-color: var(--accent-color);
+            background: rgba(255, 51, 51, 0.1);
+        }
+
+        /* --- Admin Layout Frame components --- */
+        aside {
+            width: 260px;
+            background: #000000;
+            border-right: 1px solid var(--border-color);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .admin-brand {
+            font-size: 1.6rem;
+            font-weight: 900;
+            letter-spacing: 3px;
+            margin-bottom: 3rem;
+        }
+        .admin-brand span { color: var(--accent-color); }
+
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .nav-item a {
+            color: var(--muted-color);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            font-weight: 600;
+            display: block;
+        }
+
+        .nav-item.active-item a {
+            color: var(--text-color);
+            border-left: 2px solid var(--accent-color);
+            padding-left: 10px;
+        }
+
+        .admin-main {
+            flex: 1;
+            padding: 3rem;
+            overflow-y: auto;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .metric-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+        }
+
+        .metric-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--muted-color);
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value { font-size: 1.8rem; font-weight: bold; }
+
+        .dashboard-section {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 2rem;
+            margin-bottom: 3rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .section-header {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .crud-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--muted-color);
+        }
+
+        .form-group input, .form-group select {
+            background: #111;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            outline: none;
+            width: 100%;
+        }
+        .form-group input:focus { border-color: var(--accent-color); }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+            background: transparent;
+            border: 1px solid var(--muted-color);
+            color: white;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .btn-danger { border-color: var(--accent-color); color: var(--accent-color); }
+        .btn-danger:hover { background: var(--accent-color); color: white; }
+        .btn-edit:hover { background: white; color: black; }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .data-table th, .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .data-table th {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--muted-color);
+            font-size: 0.8rem;
+        }
+
+        .status-badge {
+            background: rgba(0, 255, 102, 0.1);
+            color: var(--success-color);
+            padding: 0.2rem 0.6rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .admin-layout-wrapper { flex-direction: column; }
+            aside { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==========================================================================
+       AUTHENTICATION GATEWAY POPUPS
+       ========================================================================== -->
+    <div id="auth-gateway" class="auth-overlay">
+        
+        <!-- Login Window Configuration -->
+        <div class="auth-card" id="login-window">
+            <button class="close-auth" onclick="closeAuthGateway()">✕</button>
+            <h2>HQ Control Authentication</h2>
+            <p>Access Limited to Devour Administrators</p>
+            
+            <form onsubmit="handleLoginSubmit(event)">
+                <div class="form-group">
+                    <label>Admin Email ID</label>
+                    <input type="email" id="login-email" placeholder="name@devour.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Security Keyphrase</label>
+                    <input type="password" id="login-pass" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn" style="width:100%; padding: 0.8rem; margin-top: 1rem;">Unlock Engine</button>
+            </form>
+            <span class="auth-toggle-link" onclick="switchAuthWindow('register')">Register New Admin Key</span>
+        </div>
+
+        <!-- Registration Window Configuration -->
+        <div class="auth-card" id="register-window" style="display:none;">
+            <button class="close-auth" onclick="closeAuthGateway()">✕</button>
+            <h2>Create Root Administrator</h2>
+            <p>Deploy custom terminal authorization parameters</p>
+            
+            <form onsubmit="handleRegisterSubmit(event)">
+                <div class="form-group">
+                    <label>Corporate Identity Name</label>
+                    <input type="text" id="reg-name" placeholder="Deepanshu" required>
+                </div>
+                <div class="form-group">
+                    <label>Admin Login Email</label>
+                    <input type="email" id="reg-email" placeholder="admin@devour.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Create Command Password</label>
+                    <input type="password" id="reg-pass" placeholder="Choose strong key" required>
+                </div>
+                <button type="submit" class="btn" style="width:100%; padding: 0.8rem; margin-top: 1rem;">Register Credentials</button>
+            </form>
+            <span class="auth-toggle-link" onclick="switchAuthWindow('login')">Return to Security Login</span>
+        </div>
+
+    </div>
+
+
+    <!-- ==========================================================================
+       INTERFACE 1: CLIENT EYE STOREFRONT
+       ========================================================================== -->
+    <div id="storefront-view" class="view-section active-view">
+        <header>
+            <div class="nav-container">
+                <a href="#" class="logo">DEVOUR<span>.</span></a>
+                <ul class="nav-links">
+                    <li><a href="#catalog-display">Shop</a></li>
+                    <li><a href="#manifesto">Identity</a></li>
+                </ul>
+                <div style="font-weight: bold; font-size:0.9rem; letter-spacing:1px;">BAG (0)</div>
+            </div>
+        </header>
+
+        <section class="hero">
+            <div class="hero-content">
+                <h1>DEVOUR</h1>
+                <p>Don't just wear it. Consume it.</p>
+                <a href="#catalog-display" class="btn">Explore Drops</a>
+            </div>
+        </section>
+
+        <!-- Dynamic Store Products -->
+        <section class="shop-section" id="catalog-display">
+            <h2 class="section-title">Current Release</h2>
+            <div class="product-grid" id="storefront-products-grid">
+                <!-- Data rendered dynamically -->
+            </div>
+        </section>
+
+        <section class="brand-statement" id="manifesto">
+            <div class="statement-content">
+                <h2>The Manifesto</h2>
+                <p>DEVOUR represents an insatiable hunger for expression, individuality, and raw design. We do not believe in fashion cycles; we believe in creating timeless armor for the modern landscape. Designed to last. Built to stand out.</p>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-container">
+                <div>
+                    <h3>DEVOUR.</h3>
+                    <p style="color: var(--muted-color); font-size:0.9rem;">Premium Streetwear Culture.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Internal Gateway</h4>
+                    <ul>
+                        <li><a href="#" onclick="openAuthGateway()">Staff Terminal Access</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <div>&copy; 2026 DEVOUR Co. All Rights Reserved.</div>
+                <button class="hq-link" onclick="openAuthGateway()">⚡ HQ Secure Login</button>
+            </div>
+        </footer>
+    </div>
+
+
+    <!-- ==========================================================================
+       INTERFACE 2: ADMINISTRATOR BACKEND CORE
+       ========================================================================== -->
+    <div id="admin-view" class="view-section">
+        <div class="admin-layout-wrapper">
+            <aside>
+                <div>
+                    <div class="admin-brand">DEVOUR<span>.</span>HQ</div>
+                    <ul class="nav-menu">
+                        <li class="nav-item active-item"><a href="#">Global Control Panel</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <button class="hq-link" style="width: 100%; margin-bottom: 1rem;" onclick="exitAdminPanel()">← Lock & Exit Terminal</button>
+                    <div id="terminal-user-badge" style="color: var(--success-color); font-size: 0.7rem; letter-spacing: 1px; text-align: center; text-transform:uppercase;">AUTH: DEMO</div>
+                </div>
+            </aside>
+
+            <main class="admin-main">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3rem; align-items: center;">
+                    <h2 style="text-transform: uppercase; letter-spacing: 2px;">System Engine</h2>
+                    <span style="font-size:0.85rem; color: var(--success-color);">● LIVE REFRESH CONNECTED</span>
+                </div>
+
+                <!-- Live Metrics Matrix -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-title">Registered Skus</div>
+                        <div class="metric-value" id="stat-skus">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Active Checkout Carts</div>
+                        <div class="metric-value" id="stat-carts">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Enterprise Inventory Value</div>
+                        <div class="metric-value" id="stat-value">$0.00</div>
+                    </div>
+                </div>
+
+                <!-- Catalog CRUD Form & Grid -->
+                <div class="dashboard-section">
+                    <div class="section-header">Inventory Catalog Management</div>
+                    
+                    <form class="crud-form" id="catalog-form" onsubmit="processCatalogSubmit(event)">
+                        <input type="hidden" id="edit-index" value="-1">
+                        <div class="form-group">
+                            <label>Product Title</label>
+                            <input type="text" id="prod-name" placeholder="e.g., Tactical Cargo" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Retail Price ($)</label>
+                            <input type="number" id="prod-price" placeholder="95" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Stock Count</label>
+                            <input type="number" id="prod-stock" placeholder="50" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Image Theme URL</label>
+                            <input type="url" id="prod-img" value="https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=500&q=80">
+                        </div>
+                        <button type="submit" class="btn" id="form-submit-btn" style="padding: 0.75rem; font-size: 0.85rem;">Execute Sku</button>
+                    </form>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Item Details</th>
+                                <th>Pricing</th>
+                                <th>Stock Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="catalog-table-body"></tbody>
+                    </table>
+                </div>
+
+                <!-- Simulated Client Carts Component -->
+                <div class="dashboard-section">
+                    <div class="section-header">Live Customer Cart Deployments</div>
+                    
+                    <form class="crud-form" id="cart-form" onsubmit="provisionNewCart(event)">
+                        <div class="form-group">
+                            <label>Customer Handle</label>
+                            <input type="text" id="cart-user" placeholder="e.g., Guest_04x" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Product Allocation</label>
+                            <select id="cart-item-select" required></select>
+                        </div>
+                        <button type="submit" class="btn" style="padding: 0.75rem; font-size: 0.85rem; background: var(--text-color);">Inject Cart</button>
+                    </form>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Cart Reference ID</th>
+                                <th>Allocated Garment</th>
+                                <th>Order Status</th>
+                                <th>Purge</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart-table-body"></tbody>
+                    </table>
+                </div>
+            </main>
+        </div>
+    </div>
+
+
+    <!-- ==========================================================================
+       3. SYSTEM CORE ARCHITECTURE PIPELINE
+       ========================================================================== -->
+    <script>
+        // Core Internal State Arrays (Loaded with base configurations)
+        let inventory = [
+            { name: "Heavyweight Hoodie", price: 85.00, stock: 45, img: "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=500&q=80" },
+            { name: "Signature Box Tee", price: 45.00, stock: 80, img: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=500&q=80" },
+            { name: "Tactical Cargo Pants", price: 110.00, stock: 25, img: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=500&q=80" }
+        ];
+
+        let carts = [
+            { id: "CRT-1092", user: "User_Alpha", item: "Signature Box Tee" },
+            { id: "CRT-8841", user: "User_Beta", item: "Heavyweight Hoodie" }
+        ];
+
+        // Seeded default admin fallback values
+        let registeredAdmins = [
+            { name: "Default System Admin", email: "admin@devour.com", pass: "devour123" }
+        ];
+
+        /* --- Security & Registration Engine Modals --- */
+        function openAuthGateway() {
+            document.getElementById('auth-gateway').classList.add('active-auth');
+            switchAuthWindow('login');
+        }
+
+        function closeAuthGateway() {
+            document.getElementById('auth-gateway').classList.remove('active-auth');
+        }
+
+        function switchAuthWindow(targetWindow) {
+            if (targetWindow === 'register') {
+                document.getElementById('login-window').style.display = 'none';
+                document.getElementById('register-window').style.display = 'block';
+            } else {
+                document.getElementById('register-window').style.display = 'none';
+                document.getElementById('login-window').style.display = 'block';
+            }
+        }
+
+        function handleRegisterSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+
+            // Check duplicate allocations
+            if (registeredAdmins.find(admin => admin.email === email)) {
+                alert("Security Error: This admin terminal routing ID is already claimed.");
+                return;
+            }
+
+            registeredAdmins.push({ name, email, pass });
+            alert("Success! Admin Key authorized. You can now login using these details.");
+            document.getElementById('register-window').querySelector('form').reset();
+            switchAuthWindow('login');
+        }
+
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+
+            const validatedAdmin = registeredAdmins.find(admin => admin.email === email && admin.pass === pass);
+
+            if (validatedAdmin) {
+                // Unlock Admin Panel Workspace View
+                document.getElementById('terminal-user-badge').innerText = `AUTH: ${validatedAdmin.name}`;
+                document.getElementById('storefront-view').classList.remove('active-view');
+                document.getElementById('admin-view').classList.add('active-view');
+                closeAuthGateway();
+                document.getElementById('login-window').querySelector('form').reset();
+                window.scrollTo(0,0);
+            } else {
+                alert("ACCESS DENIED: Authentication profile mismatch.");
+            }
+        }
+
+        function exitAdminPanel() {
+            document.getElementById('admin-view').classList.remove('active-view');
+            document.getElementById('storefront-view').classList.add('active-view');
+            window.scrollTo(0,0);
+        }
+
+        /* --- Global App Management Pipeline Synchronizer --- */
+        function refreshSystemComponents() {
+            renderCustomerStorefront();
+            renderAdminCatalogTable();
+            renderAdminCartsTable();
+            computeMetrics();
+            syncCartDropdownOptions();
+        }
+
+        function renderCustomerStorefront() {
+            const grid = document.getElementById('storefront-products-grid');
+            grid.innerHTML = '';
+            
+            if(inventory.length === 0) {
+                grid.innerHTML = `<div style="color: var(--muted-color); letter-spacing: 1px;">No garments currently deployed in the active release.</div>`;
+                return;
+            }
+
+            inventory.forEach(item => {
+                grid.innerHTML += `
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="${item.img}" alt="${item.name}">
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">${item.name}</div>
+                            <div class="product-price">$${item.price.toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderAdminCatalogTable() {
+            const tbody = document.getElementById('catalog-table-body');
+            tbody.innerHTML = '';
+
+            inventory.forEach((item, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${item.name}</strong></td>
+                        <td style="color:var(--accent-color); font-weight:bold;">$${item.price.toFixed(2)}</td>
+                        <td>${item.stock} Available Units</td>
+                        <td>
+                            <button class="btn-sm btn-edit" onclick="initiateSkuUpdate(${index})">Modify</button>
+                            <button class="btn-sm btn-danger" onclick="purgeSkuItem(${index})">Purge</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderAdminCartsTable() {
+            const tbody = document.getElementById('cart-table-body');
+            tbody.innerHTML = '';
+
+            carts.forEach((cart, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${cart.id}</strong> (${cart.user})</td>
+                        <td>${cart.item}</td>
+                        <td><span class="status-badge">Awaiting Payment</span></td>
+                        <td><button class="btn-sm btn-danger" onclick="discardActiveCart(${index})">Dismiss</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function computeMetrics() {
+            document.getElementById('stat-skus').innerText = inventory.length;
+            document.getElementById('stat-carts').innerText = carts.length;
+            
+            let accumulatedValue = inventory.reduce((total, garment) => total + (garment.price * garment.stock), 0);
+            document.getElementById('stat-value').innerText = `$${accumulatedValue.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+        }
+
+        function syncCartDropdownOptions() {
+            const selectMenu = document.getElementById('cart-item-select');
+            selectMenu.innerHTML = '';
+            inventory.forEach(item => {
+                selectMenu.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+            });
+        }
+
+        /* --- CRUD Operational Functions --- */
+        function processCatalogSubmit(event) {
+            event.preventDefault();
+            const editIndex = parseInt(document.getElementById('edit-index').value);
+            const name = document.getElementById('prod-name').value;
+            const price = parseFloat(document.getElementById('prod-price').value);
+            const stock = parseInt(document.getElementById('prod-stock').value);
+            const img = document.getElementById('prod-img').value;
+
+            if (editIndex === -1) {
+                inventory.push({ name, price, stock, img });
+            } else {
+                inventory[editIndex] = { name, price, stock, img };
+                document.getElementById('edit-index').value = "-1";
+                document.getElementById('form-submit-btn').innerText = "Execute Sku";
+            }
+
+            document.getElementById('catalog-form').reset();
+            document.getElementById('prod-img').value = "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=500&q=80";
+            refreshSystemComponents();
+        }
+
+        function initiateSkuUpdate(index) {
+            const item = inventory[index];
+            document.getElementById('prod-name').value = item.name;
+            document.getElementById('prod-price').value = item.price;
+            document.getElementById('prod-stock').value = item.stock;
+            document.getElementById('prod-img').value = item.img;
+            document.getElementById('edit-index').value = index;
+            document.getElementById('form-submit-btn').innerText = "Apply Updates";
+        }
+
+        function purgeSkuItem(index) {
+            if(confirm("Confirm destructive data wipe of target garment from DEVOUR core catalogue arrays?")) {
+                inventory.splice(index, 1);
+                refreshSystemComponents();
+            }
+        }
+
+        function provisionNewCart(event) {
+            event.preventDefault();
+            const user = document.getElementById('cart-user').value;
+            const item = document.getElementById('cart-item-select').value;
+            const id = "CRT-" + Math.floor(1000 + Math.random() * 9000);
+
+            carts.push({ id, user, item });
+            document.getElementById('cart-form').reset();
+            refreshSystemComponents();
+        }
+
+        function discardActiveCart(index) {
+            carts.splice(index, 1);
+            refreshSystemComponents();
+        }
+
+        // Initialize Core Initialization Engine Lifecycle
+        refreshSystemComponents();
+    </script>
+</body>
+</html>
